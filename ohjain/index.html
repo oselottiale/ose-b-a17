@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pico Bluetooth Ohjain</title>
+<style>
+button {
+    width: 150px;
+    height: 60px;
+    font-size: 20px;
+    margin: 10px;
+}
+</style>
+</head>
+<body>
+
+<h2>Pico W Bluetooth Ohjain</h2>
+
+<button onclick="yhdista()">Yhdistä</button><br>
+<button onclick="laheta('eteen')">Eteen</button>
+<button onclick="laheta('taakse')">Taakse</button><br>
+<button onclick="laheta('stop')">Stop</button>
+
+<script>
+let laite = null;
+let karakteri = null;
+
+async function yhdista() {
+    laite = await navigator.bluetooth.requestDevice({
+        filters: [{ name: "PicoAuto" }],
+        optionalServices: ["12345678-1234-5678-1234-56789abcdef0"]
+    });
+
+    const serveri = await laite.gatt.connect();
+    const palvelu = await serveri.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
+    karakteri = await palvelu.getCharacteristic("12345678-1234-5678-1234-56789abcdef1");
+
+    alert("Yhdistetty Picoon!");
+}
+
+async function laheta(teksti) {
+    if (!karakteri) return alert("Ei yhteyttä!");
+    await karakteri.writeValue(new TextEncoder().encode(teksti));
+}
+</script>
+
+</body>
+</html>
