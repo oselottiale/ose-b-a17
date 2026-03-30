@@ -23,24 +23,54 @@ button {
 
 <script>
 let laite = null;
+let palvelu = null;
 let karakteri = null;
 
+// UUID:t pienillä kirjaimilla (tärkeää MicroPython 1.27.0)
+const SERVICE_UUID = "12345678-1234-5678-1234-56789abcdef0";
+const CHAR_UUID    = "12345678-1234-5678-1234-56789abcdef1";
+
 async function yhdista() {
-    laite = await navigator.bluetooth.requestDevice({
-        filters: [{ name: "PicoAuto" }],
-        optionalServices: ["12345678-1234-5678-1234-56789abcdef0"]
-    });
+    try {
+        console.log("Pyydetään BLE-laitetta...");
 
-    const serveri = await laite.gatt.connect();
-    const palvelu = await serveri.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
-    karakteri = await palvelu.getCharacteristic("12345678-1234-5678-1234-56789abcdef1");
+        laite = await navigator.bluetooth.requestDevice({
+            filters: [{ name: "PicoAuto" }],
+            optionalServices: [SERVICE_UUID]
+        });
 
-    alert("Yhdistetty Picoon!");
+        console.log("Yhdistetään GATT-palvelimeen...");
+        const serveri = await laite.gatt.connect();
+
+        console.log("Haetaan palvelu...");
+        palvelu = await serveri.getPrimaryService(SERVICE_UUID);
+
+        console.log("Haetaan karakteri...");
+        karakteri = await palvelu.getCharacteristic(CHAR_UUID);
+
+        alert("Yhdistetty Picoon!");
+        console.log("Yhdistetty!");
+    } 
+    catch (e) {
+        console.error("Virhe yhdistäessä:", e);
+        alert("Yhdistäminen epäonnistui");
+    }
 }
 
 async function laheta(teksti) {
-    if (!karakteri) return alert("Ei yhteyttä!");
-    await karakteri.writeValue(new TextEncoder().encode(teksti));
+    if (!karakteri) {
+        alert("Ei yhteyttä!");
+        return;
+    }
+
+    try {
+        console.log("Lähetetään:", teksti);
+        await karakteri.writeValue(new TextEncoder().encode(teksti));
+        console.log("Lähetys OK");
+    } 
+    catch (e) {
+        console.error("Lähetysvirhe:", e);
+    }
 }
 </script>
 
