@@ -35,7 +35,7 @@ async function yhdista() {
         console.log("Pyydetään BLE-laitetta...");
 
         laite = await navigator.bluetooth.requestDevice({
-            filters: [{ name: "PicoAuto" }],
+            filters: [{ name: "Ratikka" }],
             optionalServices: [SERVICE_UUID]
         });
 
