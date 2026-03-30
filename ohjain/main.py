@@ -3,16 +3,13 @@ from machine import Pin, PWM
 import aioble
 import bluetooth
 
-# -----------------------------
-# BLE UUID:t
-# -----------------------------
 BLE_SERVICE_UUID = bluetooth.UUID("12345678-1234-5678-1234-56789abcdef0")
 BLE_CHAR_UUID    = bluetooth.UUID("12345678-1234-5678-1234-56789abcdef1")
 
 palvelu = aioble.Service(BLE_SERVICE_UUID)
 komento_char = aioble.Characteristic(
     palvelu, BLE_CHAR_UUID,
-    read=True, write=True, notify=False
+    read=True, write=True
 )
 
 aioble.register_services(palvelu)
@@ -32,9 +29,6 @@ moottoriB_ohjausB = Pin(12, Pin.OUT)
 moottoriA_pwm.freq(1000)
 moottoriB_pwm.freq(1000)
 
-# -----------------------------
-# Moottorien ohjaus
-# -----------------------------
 def pysayta():
     moottoriA_pwm.duty_u16(0)
     moottoriB_pwm.duty_u16(0)
@@ -59,11 +53,6 @@ def taakse():
     moottoriA_pwm.duty_u16(50000)
     moottoriB_pwm.duty_u16(50000)
 
-# -----------------------------
-# BLE looppi
-# -----------------------------
-komento_puskuri = None
-
 async def ble_loop():
     while True:
         print("Odotetaan BLE-yhteyttä...")
@@ -77,12 +66,11 @@ async def ble_loop():
         await asyncio.sleep(0.2)
 
         while conn.is_connected():
-            # This blocks until a write happens
-            await komento_char.written()
+            event = await komento_char.written()
 
-            # Now read the actual data
-            data = await komento_char.read()
+            data = komento_char.read()
             komento = data.decode().strip()
+
             print("Komento:", komento)
 
             if komento == "eteen":
@@ -98,3 +86,4 @@ async def ble_loop():
         pysayta()
 
 asyncio.run(ble_loop())
+
