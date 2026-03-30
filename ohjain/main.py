@@ -58,7 +58,7 @@ async def ble_loop():
         print("Odotetaan BLE-yhteyttä...")
         conn = await aioble.advertise(
             100_000,
-            name="PicoAuto",
+            name="Ratikka",
             services=[BLE_SERVICE_UUID]
         )
 
