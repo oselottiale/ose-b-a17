@@ -15,13 +15,23 @@ komento_char = aioble.Characteristic(
 aioble.register_services(palvelu)
 
 # -----------------------------
-# Moottorien taajuus + lepoaika
+# variablet
 # -----------------------------
 
+# freq = moottorien taajuus, 0-65535
 freq1=65535
 freq2=1000
+# lepo = loopin lepoaika, sekunneissa
 lepo1=0.2
 lepo2=0.01
+# led = ledeihn liittyvä variable, N kohdalle numero
+ledN = 
+
+# -----------------------------
+# ledien koodi
+# -----------------------------
+
+
 
 # -----------------------------
 # Moottorien pinnit + funktiot
