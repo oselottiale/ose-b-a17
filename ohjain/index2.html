@@ -25,37 +25,94 @@ html, body {
 }
 
 .box {
-    visibility: hidden;
-    width: calc(100vw - 40px);
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 500px;
+    border: 4px solid #128a82;
+    z-index: 9999;
+}
+h1 {
+    text-align: center;
+    color: #333333;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 42px;
 }
 
-        .box {
-        background: #fff;
-        padding: 40px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        text-align: center;
-        max-width: 500px;
-        border: 4px solid #FFD700;
-        z-index: 9999;
-        }
-        h1 {
-        text-align: center;
-        color: #333333;
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 42px;
-        }
+button {
+    height:100%;
+    border: 4px solid #128a82;
+    border-radius: 8px;
+    width:calc(100% - 16px);
+    margin-right: 4px;
+    padding: 10px;
+}
+
+.parent {
+display: grid;
+grid-template-columns: 65% 35%;
+grid-template-rows: repeat(3, 50px);
+grid-column-gap: 0px;
+grid-row-gap: 8px;
+}
+
+.div1 { grid-area: 1 / 1 / 2 / 2; }
+.div2 { grid-area: 2 / 1 / 3 / 2; }
+.div3 { grid-area: 3 / 1 / 4 / 2; }
+.div4 { grid-area: 1 / 2 / 2 / 3; }
+.div5 { grid-area: 2 / 1 / 3 / 2; }
+.div6 { grid-area: 3 / 1 / 4 / 2; } 
+
+.ldr {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.hexagon, .ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+    margin: 0;
+    padding: 0;
+}
+
 </style>
 </head>
 <body>
+<div class="box">
+<h1>Ratikan ohjain</h1>
+<div class="parent">
+<div class="div1"><button onclick="laheta('eteen')">Eteen</button></div>
+<div class="div2"><button onclick="laheta('stop')">Stop</button></div>
+<div class="div3"><button onclick="laheta('taakse')">Taakse</button></div>
+<div class="div4"><button onclick="yhdista()" style="margin-left: 4px;">Yhdistä</button></div>
+<div class="div5">
+    <div class="ldr">
+      <svg class="hexagon" viewBox="0 0 50 50">
+          <polygon points="10,25 17.5,12 32.5,12 40,25 32.5,38 17.5,38"></polygon>
+      </svg>
+      <svg class="ring" viewBox="0 0 50 50">
+          <circle cx="25" cy="25" r="22"></circle>
+      </svg>
+    </div>
+</div>
+<div class="div6"></div>
+</div> 
 
-<h2>Pico W Bluetooth Ohjain</h2>
 
-<button onclick="yhdista()">Yhdistä</button><br>
-<button onclick="laheta('eteen')">Eteen</button>
-<button onclick="laheta('taakse')">Taakse</button><br>
-<button onclick="laheta('stop')">Stop</button>
 
+</div>
 <script>
 let laite = null;
 let palvelu = null;
@@ -99,12 +156,12 @@ async function laheta(teksti) {
     }
 
     try {
-        console.log("Lähetetään:", teksti);
+        console.log("PM01 | Lähetetään:", teksti); //progress message 01
         await karakteri.writeValue(new TextEncoder().encode(teksti));
-        console.log("Lähetys OK");
+        console.log("SM02 | Lähetys OK");
     } 
     catch (e) {
-        console.error("Lähetysvirhe:", e);
+        console.error("EM02 | Lähetysvirhe:", e);
     }
 }
 </script>
