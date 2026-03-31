@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ratikan ohjain</title>
+<link rel="stylesheet" href="https://dev.oseale.com/css/color-ldr.css">
+<style> 
+body {    
+    margin: 0;        
+    padding: 0;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #128a82, #083b38);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.box {
+    visibility: hidden;
+    width: calc(100vw - 40px);
+}
+
+        .box {
+        background: #fff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 500px;
+        border: 4px solid #FFD700;
+        z-index: 9999;
+        }
+        h1 {
+        text-align: center;
+        color: #333333;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 42px;
+        }
+</style>
+</head>
+<body>
+
+<h2>Pico W Bluetooth Ohjain</h2>
+
+<button onclick="yhdista()">Yhdistä</button><br>
+<button onclick="laheta('eteen')">Eteen</button>
+<button onclick="laheta('taakse')">Taakse</button><br>
+<button onclick="laheta('stop')">Stop</button>
+
+<script>
+let laite = null;
+let palvelu = null;
+let karakteri = null;
+
+// UUID:t pienillä kirjaimilla 
+const SERVICE_UUID = "12345678-1234-5678-1234-56789abcdef0";
+const CHAR_UUID    = "12345678-1234-5678-1234-56789abcdef1";
+
+async function yhdista() {
+    try {
+        console.log("CV01 | Pyydetään BLE-laitetta..."); //config vaihe 1
+
+        laite = await navigator.bluetooth.requestDevice({
+            filters: [{ name: "Ratikka" }],
+            optionalServices: [SERVICE_UUID]
+        });
+
+        console.log("CV02 | Yhdistetään GATT-palvelimeen..."); //config vaihe 2
+        const serveri = await laite.gatt.connect();
+
+        console.log("CV03 | Haetaan palvelu..."); //config vaihe 3
+        palvelu = await serveri.getPrimaryService(SERVICE_UUID);
+
+        console.log("CV04 | Haetaan karakteri..."); //config vaihe 4
+        karakteri = await palvelu.getCharacteristic(CHAR_UUID);
+
+        alert("Yhdistetty Picoon!");
+        console.log("SM01 | Yhdistetty!"); //succes message 1
+    } 
+    catch (e) {
+        console.error("EM01 | Virhe yhdistäessä:", e); //error message 1
+        alert("Yhdistäminen epäonnistui");
+    }
+}
+
+async function laheta(teksti) {
+    if (!karakteri) {
+        alert("Ei yhteyttä!");
+        return;
+    }
+
+    try {
+        console.log("Lähetetään:", teksti);
+        await karakteri.writeValue(new TextEncoder().encode(teksti));
+        console.log("Lähetys OK");
+    } 
+    catch (e) {
+        console.error("Lähetysvirhe:", e);
+    }
+}
+</script>
+
+</body>
+</html>
