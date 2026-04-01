@@ -62,6 +62,8 @@ grid-row-gap: 8px;
 .div2 { grid-area: 2 / 1 / 3 / 2; }
 .div3 { grid-area: 3 / 1 / 4 / 2; }
 .div4 { grid-area: 1 / 2 / 2 / 3; }
+.div5 { grid-area: 2 / 2 / 3 / 3; }
+.div6 { grid-area: 3 / 2 / 4 / 3; } 
 
 .ldr {
     position: fixed;
@@ -95,13 +97,33 @@ grid-row-gap: 8px;
 <div class="div2"><button onclick="laheta('pysayta()')">Stop</button></div>
 <div class="div3"><button onclick="lahetaLiiku(0)">Taakse</button></div>
 <div class="div4"><button onclick="yhdista()" style="margin-left: 4px;">Yhdistä</button></div>
+<div class="div5"> 
+<label>Nopeus (freq):</label>
+<input id="freq" type="number" value="50000" style="width:100%;">
+</div>
+<div class="div6">
+<label>Aika (sek):</label>
+<input id="aika" type="number" value="1" style="width:100%;"></div> 
 </div> 
 
 
 
 
 
+
+
 </div>
+
+<script>
+async function lahetaLiiku(suunta) {
+    const freq = document.getElementById("freq").value;
+    const aika = document.getElementById("aika").value;
+
+    const komento = `liiku(${suunta},${freq},${aika})`;
+    await laheta(komento);
+}
+</script>
+
 <script>
 let laite = null;
 let palvelu = null;
