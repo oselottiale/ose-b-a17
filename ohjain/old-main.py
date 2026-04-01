@@ -1,4 +1,4 @@
-import uasyncio as asyncio
+import uasyncio as asyncio #v1 käytä sivua dev.oseale.com/ohjain/index2.html ohjaimena
 from machine import Pin, PWM
 import aioble
 import bluetooth
