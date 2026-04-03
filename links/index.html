@@ -107,6 +107,13 @@ function parseLinks() {
     titleElement.textContent = pageTitle;
 
     container.innerHTML = "";
+    
+    if ([...params.keys()].length === 0) {
+        container.innerHTML = "<p>Ei linkkejä saatavilla</p>";
+        container.style.opacity = 1;
+        return;
+    }
+
 
     params.forEach((rawValue, key) => {
         if (key === "t") return;
