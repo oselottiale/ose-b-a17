@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="https://t4.oseale.com/images/favicon.png" type="image/png">
+<title>Ladataan...</title>
+
+<style>
+    body {    
+        margin: 0;        
+        padding: 0;
+        overflow-x: hidden;
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #128a82, #083b38);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    .box {
+        background: #fff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 500px;
+        border: 4px solid #128a82;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+        font-size: 42px;
+        margin-top: 0;
+    }
+
+    .entry {
+        margin-bottom: 10px;
+    }
+
+    .button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 4px solid #128a82;
+        border-radius: 8px;
+        padding: 10px;
+        width: calc(100% - 16px);
+        text-decoration: none;
+        color: #000;
+        background: #e8fffd;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background: #d4f7f4;
+    }
+
+    .title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .arrow-icon {
+        font-size: 16px;
+        opacity: 0.7;
+    }
+
+    .copy-icon {
+        background: #128a82;
+        color: white;
+        padding: 4px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        margin-left: 10px;
+        user-select: none;
+    }
+
+    .copy-icon:hover {
+        background: #0e6b66;
+    }
+
+    #links {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+</style>
+</head>
+<body>
+<div class="box">
+    <h1 id="pagetitle">Ladataan...</h1>
+    <div id="links">Ladataan...</div>
+</div>
+
+<script>
+function parseLinks() {
+    const params = new URLSearchParams(window.location.search);
+    const container = document.getElementById("links");
+    const titleElement = document.getElementById("pagetitle");
+
+    const pageTitle = params.get("t") || "Linkit";
+    document.title = pageTitle;
+    titleElement.textContent = pageTitle;
+
+    container.innerHTML = "";
+
+    params.forEach((rawValue, key) => {
+        if (key === "t") return;
+        if (!/^L\d*$/.test(key)) return;
+
+        const parts = rawValue.split(":");
+        if (parts.length < 2) return;
+
+        const title = parts[0].trim();
+        const urlBlock = parts.slice(1).join(":").trim();
+        if (!title || !urlBlock) return;
+
+        const urls = urlBlock.split(",").map(u => u.trim()).filter(u => u.length > 0);
+
+        urls.forEach((url, index) => {
+            if (url.toLowerCase().startsWith("javascript:")) return;
+
+            const entry = document.createElement("div");
+            entry.className = "entry";
+
+            const btn = document.createElement("a");
+            btn.className = "button";
+            btn.href = url;
+            btn.target = "_blank";
+
+            const titleWrap = document.createElement("span");
+            titleWrap.className = "title-wrap";
+
+            const titleSpan = document.createElement("span");
+            titleSpan.textContent = index === 0 ? title : `${title} (${index + 1})`;
+
+            const arrow = document.createElement("span");
+            arrow.className = "arrow-icon";
+            arrow.textContent = "↗";
+
+            titleWrap.appendChild(titleSpan);
+            titleWrap.appendChild(arrow);
+
+            const copyIcon = document.createElement("span");
+            copyIcon.className = "copy-icon";
+            copyIcon.textContent = "📋 Kopioi";
+
+            copyIcon.onclick = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                navigator.clipboard.writeText(url);
+                copyIcon.textContent = "✔ Kopioitu";
+                setTimeout(() => copyIcon.textContent = "📋 Kopioi", 1200);
+            };
+
+            btn.appendChild(titleWrap);
+            btn.appendChild(copyIcon);
+            entry.appendChild(btn);
+            container.appendChild(entry);
+        });
+    });
+
+    container.style.opacity = 1;
+}
+
+parseLinks();
+</script>
+
+</body>
+</html>
