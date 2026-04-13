@@ -123,7 +123,7 @@ async function lahetaLiiku(suunta) {
     const freq = document.getElementById("freq").value;
     const aika = document.getElementById("aika").value;
 
-    const komento = `move_task(${suunta},${freq},${aika})`;
+    const komento = `move(${suunta},${freq},${aika})`;
     await laheta(komento);
 }
 </script>
