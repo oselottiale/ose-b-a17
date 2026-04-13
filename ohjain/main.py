@@ -48,8 +48,8 @@ def stop():
     aja(0,0,0,0,0)
     print("Pysäytetty / Stopped")
 
-async def move_task(direction, freq, time):
-    if direction == 1:
+async def liiku_task(suunta, freq, aika):
+    if suunta == 1:
         drive(1,0,1,0,freq)
         print("Eteen / Forward")
     else:
@@ -90,7 +90,7 @@ async def ble_loop():
                     task = None
                 stop()
                 
-            elif command.startswith("move(") and command.endswith(")"):
+            elif command.startswith("liiku(") and command.endswith(")"):
                 try:
                     args = command[6:-1]
                     direction, freq, time = map(int, args.split(","))
@@ -98,10 +98,10 @@ async def ble_loop():
                     if task:
                         task.cancel()
 
-                    task = asyncio.create_task(move_task(direction, freq, time))
+                    task = asyncio.create_task(liiku_task(suunta, freq, aika))
 
                 except Exception as e:
-                    print("Virhe liiku-komennossa / Error in move-command:", e)
+                    print("Virhe liiku-komennossa / Error in liiku-command:", e)
 
             elif command.startswith("led(") and command.endswith(")"):
                 try:
