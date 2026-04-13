@@ -1,20 +1,20 @@
-import uasyncio as asyncio  # V2 vanha valkoinen ohjain sivu ei toimi tämän kanssa vain v2 ohjain toimii!
+import uasyncio as asyncio  #Vanha valkoinen ohjainsivu ei toimi. Vain v2 ohjain toimii! / Old white contorller page does not work. Only v2 controller works!
 from machine import Pin, PWM
 import aioble, bluetooth, time
 
 BLE_SERVICE_UUID = bluetooth.UUID("12345678-1234-5678-1234-56789abcdef0")
 BLE_CHAR_UUID    = bluetooth.UUID("12345678-1234-5678-1234-56789abcdef1")
 
-palvelu = aioble.Service(BLE_SERVICE_UUID)
-komento_char = aioble.Characteristic(
-    palvelu, BLE_CHAR_UUID,
+service = aioble.Service(BLE_SERVICE_UUID)
+command_char = aioble.Characteristic(
+    service, BLE_CHAR_UUID,
     read=True, write=True
 )
 
-aioble.register_services(palvelu)
+aioble.register_services(service)
 
-# tehtävät
-tehtava = None
+# Tehtävät / Tasks
+task = None
 led_t = None
 
 # LED
@@ -23,89 +23,89 @@ led = Pin(0, Pin.OUT)
 async def leds(s):
     led.value(s)
 
-# Moottorit
-moottoriA_pwm = PWM(Pin(16))
-moottoriB_pwm = PWM(Pin(18))
+# Moottorit / Motors
+motorA_pwm = PWM(Pin(16))
+motorB_pwm = PWM(Pin(18))
 
-moottoriA_ohjausA = Pin(15, Pin.OUT)
-moottoriA_ohjausB = Pin(14, Pin.OUT)
+motorA_controlA = Pin(15, Pin.OUT)
+motorA_controlB = Pin(14, Pin.OUT)
 
-moottoriB_ohjausA = Pin(13, Pin.OUT)
-moottoriB_ohjausB = Pin(12, Pin.OUT)
+motorB_controlA = Pin(13, Pin.OUT)
+motorB_controlB = Pin(12, Pin.OUT)
 
-moottoriA_pwm.freq(1000)
-moottoriB_pwm.freq(1000)
+motorA_pwm.freq(1000)
+motorB_pwm.freq(1000)
 
-def aja(aa, ab, ba, bb, freq):
-    moottoriA_ohjausA.value(aa)
-    moottoriA_ohjausB.value(ab)
-    moottoriB_ohjausA.value(ba)
-    moottoriB_ohjausB.value(bb)
-    moottoriA_pwm.duty_u16(freq)
-    moottoriB_pwm.duty_u16(freq)
+def drive(aa, ab, ba, bb, freq):
+    motorA_controlA.value(aa)
+    motorA_controlB.value(ab)
+    motorB_controlA.value(ba)
+    motorB_controlB.value(bb)
+    motorA_pwm.duty_u16(freq)
+    motorB_pwm.duty_u16(freq)
 
-def pysayta():
+def stop():
     aja(0,0,0,0,0)
-    print("pysäytetty")
+    print("Pysäytetty / Stopped")
 
-async def liiku_task(suunta, freq, aika):
-    if suunta == 1:
-        aja(1,0,1,0,freq)
-        print("eteen")
+async def move_task(direction, freq, time):
+    if direction == 1:
+        drive(1,0,1,0,freq)
+        print("Eteen / Forward")
     else:
-        aja(0,1,0,1,freq)
-        print("taakse")
+        drive(0,1,0,1,freq)
+        print("Taakse / Backward")
 
-    if aika != -1:
+    if time != -1:
         try:
-            await asyncio.sleep(aika)
+            await asyncio.sleep(time)
         except asyncio.CancelledError:
             return
-        pysayta()
+        stop()
 
 async def ble_loop():
-    global tehtava, led_t
+    global task, led_t
 
     while True:
-        print("Odotetaan BLE-yhteyttä...")
+        print("Odotetaan BLE-yhteyttä... / Awaiting for BLE-connection...")
         conn = await aioble.advertise(
             100_000,
             name="Ratikka",
             services=[BLE_SERVICE_UUID]
         )
 
-        print("Yhdistetty!")
+        print("Yhdistetty! / Connected!")
         await asyncio.sleep(0.2)
 
         while conn.is_connected():
-            event = await komento_char.written()
+            event = await command_char.written()
 
-            data = komento_char.read()
-            komento = data.decode().strip()
-            print("Komento:", komento)
+            data = command_char.read()
+            command = data.decode().strip()
+            print("Komento / Command:", command)
 
-            if komento == "pysayta()":
-                if tehtava:
-                    tehtava.cancel()
-                    tehtava = None
-                pysayta()
+            if command == "stop()":
+                if task:
+                    task.cancel()
+                    task = None
+                stop()
                 
-            elif komento.startswith("liiku(") and komento.endswith(")"):
+            elif command.startswith("move(") and command.endswith(")"):
                 try:
-                    args = komento[6:-1]
-                    suunta, freq, aika = map(int, args.split(","))
+                    args = command[6:-1]
+                    direction, freq, time = map(int, args.split(","))
 
-                    if tehtava:
-                        tehtava.cancel()
+                    if task:
+                        task.cancel()
 
-                    tehtava = asyncio.create_task(liiku_task(suunta, freq, aika))
+                    task = asyncio.create_task(move_task(direction, freq, time))
 
                 except Exception as e:
-                    print("Virhe liiku-komennossa:", e)
+                    print("Virhe liiku-komennossa / Error in move-command:", e)
 
-            elif komento.startswith("led(") and komento.endswith(")"):
+            elif command.startswith("led(") and command.endswith(")"):
                 try:
-                    state = int(komento[4:-1])
+                    state = int(command[4:-1])
 
                     if led_t:
                         led_t.cancel()
@@ -113,12 +113,12 @@ async def ble_loop():
                     led_t = asyncio.create_task(leds(state))
 
                 except Exception as e:
-                    print("Virhe led-komennossa:", e)
+                    print("Virhe led-komennossa / Error in led-command:", e)
 
             await asyncio.sleep(0.01)
 
-        print("Yhteys katkaistu")
-        pysayta()
+        print("Yhteys katkaistu / Connection terminated")
+        stop()
 
 asyncio.run(ble_loop())
 
