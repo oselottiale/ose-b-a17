@@ -97,7 +97,7 @@ grid-row-gap: 8px;
 <h1>Ratikan ohjain</h1>
 <div class="parent">
 <div class="div1"><button onclick="lahetaLiiku(1)">Eteen</button></div>
-<div class="div2"><button onclick="laheta('pysayta()')">Stop</button></div>
+<div class="div2"><button onclick="laheta('stop()')">Stop</button></div>
 <div class="div3"><button onclick="lahetaLiiku(0)">Taakse</button></div>
 <div class="div4"><button onclick="yhdista()" style="margin-left: 4px;">Yhdistä</button></div>
 <div class="div5"><button onclick="laheta('led(1)')" style="margin-left: 4px;">Led päälle</button></div>
@@ -123,7 +123,7 @@ async function lahetaLiiku(suunta) {
     const freq = document.getElementById("freq").value;
     const aika = document.getElementById("aika").value;
 
-    const komento = `liiku(${suunta},${freq},${aika})`;
+    const komento = `move(${suunta},${freq},${aika})`;
     await laheta(komento);
 }
 </script>
