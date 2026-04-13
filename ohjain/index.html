@@ -50,13 +50,13 @@ button {
     margin-right: 4px;
     padding: 10px;
 }
-
+    
 .parent {
 display: grid;
 grid-template-columns: 65% 35%;
-grid-template-rows: repeat(3, 50px);
+grid-template-rows: repeat(4, 50px);
 grid-column-gap: 0px;
-grid-row-gap: 8px;
+grid-row-gap: 0px;
 }
 
 .div1 { grid-area: 1 / 1 / 2 / 2; }
@@ -64,7 +64,9 @@ grid-row-gap: 8px;
 .div3 { grid-area: 3 / 1 / 4 / 2; }
 .div4 { grid-area: 1 / 2 / 2 / 3; }
 .div5 { grid-area: 2 / 2 / 3 / 3; }
-.div6 { grid-area: 3 / 2 / 4 / 3; } 
+.div6 { grid-area: 3 / 2 / 4 / 3; }
+.div7 { grid-area: 4 / 2 / 5 / 3; }
+
 
 .ldr {
     position: fixed;
@@ -98,14 +100,15 @@ grid-row-gap: 8px;
 <div class="div2"><button onclick="laheta('pysayta()')">Stop</button></div>
 <div class="div3"><button onclick="lahetaLiiku(0)">Taakse</button></div>
 <div class="div4"><button onclick="yhdista()" style="margin-left: 4px;">Yhdistä</button></div>
-<div class="div5"> 
-<label>Nopeus (freq):</label>
-<input id="freq" type="number" value="65535" style="width:100%;">
-</div>
+<div class="div5"><button onclick="laheta('led(1)')" style="margin-left: 4px;">Led päälle</button></div>
 <div class="div6">
 <label>Aika (sek):</label>
 <input id="aika" type="number" value="1" style="width:100%;"></div> 
 </div> 
+<div class="div7"> 
+<label>Nopeus (freq):</label>
+<input id="freq" type="number" value="65535" style="width:100%;">
+</div>
 
 
 
