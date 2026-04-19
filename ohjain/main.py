@@ -56,8 +56,7 @@ async def move_task(direction, freq, duration_ms):
     else:
         drive(0,1,0,1,freq)
         print("Backward")
-
-    # Convert ms → seconds
+        
     if duration_ms != -1:
         try:
             await asyncio.sleep(duration_ms / 1000)
