@@ -6,6 +6,7 @@
     stroke: #ffffff;
     stroke-width: 4;
     stroke-linejoin: round;
+    transform: rotate(90deg);
 }
 
 .ring {
