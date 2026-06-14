@@ -8,6 +8,7 @@
     stroke-linejoin: round;
     stroke: #39C5BB; 
     animation: colorShift 6s infinite linear; 
+    transform: rotate(90deg);
 }
 
 .ring {
