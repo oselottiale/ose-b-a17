@@ -14,7 +14,6 @@
     input, button { padding:6px 10px; margin:4px 0; }
     button { cursor:pointer; }
 
-    /* Bowling-style scoreboard */
     table {
       width:100%;
       border-collapse:collapse;
@@ -22,12 +21,13 @@
     }
     th, td {
       border:1px solid #ccc;
-      padding:8px;
+      padding:6px;
       text-align:center;
+      min-width:40px;
     }
 
     .current-turn {
-      background:gold;
+      background:#c8f7c5; /* vihreä */
       font-weight:bold;
     }
 
@@ -62,8 +62,8 @@
       <thead>
         <tr>
           <th>Pelaaja</th>
-          <th>Pisteet</th>
-          <th>Hutit</th>
+          <th>Heitot</th>
+          <th>Yhteensä</th>
           <th>Tila</th>
         </tr>
       </thead>
@@ -108,7 +108,15 @@
       const name = nameInput.value.trim();
       if (!name) return;
 
-      players.push({ name, score: 0, misses: 0, eliminated: false, winner: false });
+      players.push({
+        name,
+        score: 0,
+        misses: 0,
+        eliminated: false,
+        winner: false,
+        throws: [] // heittorivit
+      });
+
       nameInput.value = '';
       renderScoreboard();
       if (players.length === 1) updateCurrentPlayerLabel();
@@ -125,10 +133,12 @@
         else if (p.eliminated) row.classList.add("eliminated");
         else if (i === currentIndex) row.classList.add("current-turn");
 
+        const throwsHTML = p.throws.map(t => `<span>${t}</span>`).join(" ");
+
         row.innerHTML = `
           <td>${p.name}</td>
+          <td>${throwsHTML}</td>
           <td>${p.score}</td>
-          <td>${p.misses}</td>
           <td>${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
         `;
 
@@ -178,10 +188,14 @@
       const pinsCount = parseInt(document.getElementById('pinsCount').value, 10);
 
       let points = 0;
+      let boxValue = "";
+
       if (!isNaN(singleVal) && singleVal > 0 && (isNaN(pinsCount) || pinsCount <= 1)) {
         points = singleVal;
+        boxValue = singleVal;
       } else if (!isNaN(pinsCount) && pinsCount >= 2) {
         points = pinsCount;
+        boxValue = pinsCount;
       } else {
         setStatus('Täytä joko yhden keilan numero tai kaatuneiden keilojen määrä.');
         return;
@@ -196,12 +210,14 @@
 
       if (newScore > 50) {
         newScore = 25;
-        logMessage(`${p.name} sai ${points} pistettä (ylitys: ${oldScore} → 25).`);
+        boxValue = "\\25"; // ylitysmerkintä
+        logMessage(`${p.name} ylitti 50 → pudotus 25.`);
       } else {
-        logMessage(`${p.name} sai ${points} pistettä (${oldScore} → ${newScore}).`);
+        logMessage(`${p.name} sai ${points} pistettä.`);
       }
 
       p.score = newScore;
+      p.throws.push(boxValue);
 
       if (p.score === 50) {
         gameOver = true;
@@ -225,6 +241,8 @@
       }
 
       p.misses += 1;
+      p.throws.push("-"); // huti ruutuun
+
       logMessage(`${p.name} huti (putki: ${p.misses}).`);
 
       if (p.misses >= 3) {
