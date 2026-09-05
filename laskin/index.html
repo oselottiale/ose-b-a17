@@ -19,26 +19,59 @@
       border-collapse:collapse;
       margin-top:10px;
     }
-    th, td {
+
+    th {
       border:1px solid #ccc;
       padding:6px;
       text-align:center;
+      font-size:14px;
+    }
+
+    td {
+      border:1px solid #ccc;
+      padding:6px;
+      text-align:center;
+      vertical-align:middle;
+    }
+
+    /* Heittoboksit */
+    .throw-box {
+      display:inline-block;
+      min-width:28px;
+      padding:4px 6px;
+      margin-right:10px;
+      border-right:2px solid #ccc; /* pystyviiva */
+      border-radius:4px;
+      background:#fafafa;
+      font-size:14px;
+    }
+
+    /* Poista pystyviiva viimeisestä ruudusta */
+    .throw-box:last-child {
+      border-right:none;
+    }
+
+    /* Pienemmät laatikot tilalle ja totalille */
+    .small-box {
+      padding:4px 6px;
+      font-size:13px;
       min-width:40px;
     }
 
+    /* Highlightit */
     .current-turn {
-      background:#c8f7c5; /* vihreä */
+      background:#c8f7c5 !important; /* vihreä */
       font-weight:bold;
     }
 
     .winner {
-      background:gold;
+      background:gold !important;
       font-weight:bold;
       color:#000;
     }
 
     .eliminated {
-      background:#ffdddd;
+      background:#ffdddd !important;
       color:#a00;
       text-decoration:line-through;
     }
@@ -63,7 +96,7 @@
         <tr>
           <th>Pelaaja</th>
           <th>Heitot</th>
-          <th>Yhteensä</th>
+          <th>Yht.</th>
           <th>Tila</th>
         </tr>
       </thead>
@@ -114,7 +147,7 @@
         misses: 0,
         eliminated: false,
         winner: false,
-        throws: [] // heittorivit
+        throws: []
       });
 
       nameInput.value = '';
@@ -133,13 +166,15 @@
         else if (p.eliminated) row.classList.add("eliminated");
         else if (i === currentIndex) row.classList.add("current-turn");
 
-        const throwsHTML = p.throws.map(t => `<span>${t}</span>`).join(" ");
+        const throwsHTML = p.throws
+          .map(t => `<span class="throw-box">${t}</span>`)
+          .join("");
 
         row.innerHTML = `
           <td>${p.name}</td>
           <td>${throwsHTML}</td>
-          <td>${p.score}</td>
-          <td>${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
+          <td class="small-box">${p.score}</td>
+          <td class="small-box">${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
         `;
 
         tbody.appendChild(row);
@@ -210,7 +245,7 @@
 
       if (newScore > 50) {
         newScore = 25;
-        boxValue = "\\25"; // ylitysmerkintä
+        boxValue = "\\25";
         logMessage(`${p.name} ylitti 50 → pudotus 25.`);
       } else {
         logMessage(`${p.name} sai ${points} pistettä.`);
@@ -241,7 +276,7 @@
       }
 
       p.misses += 1;
-      p.throws.push("-"); // huti ruutuun
+      p.throws.push("-");
 
       logMessage(`${p.name} huti (putki: ${p.misses}).`);
 
