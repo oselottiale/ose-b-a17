@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mölkky-laskuri</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#f4f4f4; margin:0; padding:20px; }
+    h1 { margin-bottom:10px; }
+    .players, .controls, .log { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px; }
+    input, button { padding:6px 10px; margin:4px 0; }
+    button { cursor:pointer; }
+    .player-list { margin-top:10px; }
+    .player { padding:4px 0; }
+    .winner { color:green; font-weight:bold; }
+    .eliminated { color:#999; text-decoration:line-through; }
+    .current { font-weight:bold; }
+    .log-entry { font-size:0.9em; border-bottom:1px solid #eee; padding:4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Mölkky-laskuri</h1>
+
+  <div class="players">
+    <h2>Pelaajat</h2>
+    <input id="playerName" type="text" placeholder="Pelaajan nimi">
+    <button onclick="addPlayer()">Lisää pelaaja</button>
+    <div class="player-list" id="playerList"></div>
+  </div>
+
+  <div class="controls">
+    <h2>Kierros</h2>
+    <div>Vuorossa: <span id="currentPlayerLabel">–</span></div>
+
+    <label>
+      Yksi kaatunut keila (keilan numero):
+      <input id="singlePinValue" type="number" min="0" max="12" placeholder="esim. 10">
+    </label>
+    <br>
+
+    <label>
+      Kaatuneiden keilojen määrä (jos 2+ kaatuu):
+      <input id="pinsCount" type="number" min="0" max="12" placeholder="esim. 3">
+    </label>
+    <br>
+
+    <button onclick="applyThrow()">Merkitse heitto</button>
+    <button onclick="registerMiss()">Huti</button>
+
+    <div id="statusMessage" style="margin-top:8px; font-size:0.9em;"></div>
+  </div>
+
+  <div class="log">
+    <h2>Lokikirja</h2>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    const players = [];
+    let currentIndex = 0;
+    let gameOver = false;
+
+    function addPlayer() {
+      const nameInput = document.getElementById('playerName');
+      const name = nameInput.value.trim();
+      if (!name) return;
+      players.push({ name, score: 0, misses: 0, eliminated: false });
+      nameInput.value = '';
+      renderPlayers();
+      if (players.length === 1) updateCurrentPlayerLabel();
+    }
+
+    function renderPlayers() {
+      const list = document.getElementById('playerList');
+      list.innerHTML = '';
+      players.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'player' +
+          (p.eliminated ? ' eliminated' : '') +
+          (i === currentIndex ? ' current' : '');
+        div.textContent = `${p.name}: ${p.score} pistettä (huteja: ${p.misses})`;
+        list.appendChild(div);
+      });
+    }
+
+    function updateCurrentPlayerLabel() {
+      const label = document.getElementById('currentPlayerLabel');
+      if (!players.length) {
+        label.textContent = '–';
+        return;
+      }
+      const p = players[currentIndex];
+      label.textContent = p.name + (p.eliminated ? ' (poistettu)' : '');
+    }
+
+    function nextPlayer() {
+      if (!players.length) return;
+      let attempts = 0;
+      do {
+        currentIndex = (currentIndex + 1) % players.length;
+        attempts++;
+        if (attempts > players.length) break;
+      } while (players[currentIndex].eliminated);
+      updateCurrentPlayerLabel();
+      renderPlayers();
+    }
+
+    function logMessage(msg) {
+      const log = document.getElementById('log');
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.textContent = msg;
+      log.prepend(div);
+    }
+
+    function applyThrow() {
+      if (gameOver || !players.length) return;
+      const p = players[currentIndex];
+      if (p.eliminated) {
+        nextPlayer();
+        return;
+      }
+
+      const singleVal = parseInt(document.getElementById('singlePinValue').value, 10);
+      const pinsCount = parseInt(document.getElementById('pinsCount').value, 10);
+
+      let points = 0;
+      if (!isNaN(singleVal) && singleVal > 0 && (isNaN(pinsCount) || pinsCount <= 1)) {
+        points = singleVal;
+      } else if (!isNaN(pinsCount) && pinsCount >= 2) {
+        points = pinsCount;
+      } else {
+        setStatus('Täytä joko yhden keilan numero tai kaatuneiden keilojen määrä.');
+        return;
+      }
+
+      document.getElementById('singlePinValue').value = '';
+      document.getElementById('pinsCount').value = '';
+
+      p.misses = 0;
+      const oldScore = p.score;
+      let newScore = p.score + points;
+
+      if (newScore > 50) {
+        newScore = 25;
+        logMessage(`${p.name} sai ${points} pistettä (ylitys: ${oldScore} → 25).`);
+      } else {
+        logMessage(`${p.name} sai ${points} pistettä (${oldScore} → ${newScore}).`);
+      }
+
+      p.score = newScore;
+
+      if (p.score === 50) {
+        gameOver = true;
+        setStatus(`${p.name} voittaa tasan 50 pisteellä.`);
+        renderPlayers();
+        return;
+      }
+
+      setStatus(`${p.name} nyt ${p.score} pistettä.`);
+      renderPlayers();
+      nextPlayer();
+    }
+
+    function registerMiss() {
+      if (gameOver || !players.length) return;
+      const p = players[currentIndex];
+      if (p.eliminated) {
+        nextPlayer();
+        return;
+      }
+
+      p.misses += 1;
+      logMessage(`${p.name} huti (putki: ${p.misses}).`);
+
+      if (p.misses >= 3) {
+        p.eliminated = true;
+        setStatus(`${p.name} poistetaan (3 hutiä peräkkäin).`);
+        const active = players.filter(pl => !pl.eliminated);
+        if (active.length === 1) {
+          gameOver = true;
+          setStatus(`${active[0].name} voittaa viimeisenä jäljellä.`);
+        }
+      } else {
+        setStatus(`${p.name}: ${p.misses} hutiä peräkkäin.`);
+      }
+
+      renderPlayers();
+      if (!gameOver) nextPlayer();
+    }
+
+    function setStatus(msg) {
+      document.getElementById('statusMessage').textContent = msg;
+    }
+  </script>
+</body>
+</html>
