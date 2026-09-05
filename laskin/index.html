@@ -6,15 +6,48 @@
   <style>
     body { font-family: system-ui, sans-serif; background:#f4f4f4; margin:0; padding:20px; }
     h1 { margin-bottom:10px; }
-    .players, .controls, .log { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px; }
+
+    .players, .controls, .log {
+      background:#fff; padding:15px; margin-bottom:15px; border-radius:8px;
+    }
+
     input, button { padding:6px 10px; margin:4px 0; }
     button { cursor:pointer; }
-    .player-list { margin-top:10px; }
-    .player { padding:4px 0; }
-    .winner { color:green; font-weight:bold; }
-    .eliminated { color:#999; text-decoration:line-through; }
-    .current { font-weight:bold; }
-    .log-entry { font-size:0.9em; border-bottom:1px solid #eee; padding:4px 0; }
+
+    /* Bowling-style scoreboard */
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:10px;
+    }
+    th, td {
+      border:1px solid #ccc;
+      padding:8px;
+      text-align:center;
+    }
+
+    .current-turn {
+      background:gold;
+      font-weight:bold;
+    }
+
+    .winner {
+      background:gold;
+      font-weight:bold;
+      color:#000;
+    }
+
+    .eliminated {
+      background:#ffdddd;
+      color:#a00;
+      text-decoration:line-through;
+    }
+
+    .log-entry {
+      font-size:0.9em;
+      border-bottom:1px solid #eee;
+      padding:4px 0;
+    }
   </style>
 </head>
 <body>
@@ -24,7 +57,18 @@
     <h2>Pelaajat</h2>
     <input id="playerName" type="text" placeholder="Pelaajan nimi">
     <button onclick="addPlayer()">Lisää pelaaja</button>
-    <div class="player-list" id="playerList"></div>
+
+    <table id="scoreboard">
+      <thead>
+        <tr>
+          <th>Pelaaja</th>
+          <th>Pisteet</th>
+          <th>Hutit</th>
+          <th>Tila</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 
   <div class="controls">
@@ -63,22 +107,32 @@
       const nameInput = document.getElementById('playerName');
       const name = nameInput.value.trim();
       if (!name) return;
-      players.push({ name, score: 0, misses: 0, eliminated: false });
+
+      players.push({ name, score: 0, misses: 0, eliminated: false, winner: false });
       nameInput.value = '';
-      renderPlayers();
+      renderScoreboard();
       if (players.length === 1) updateCurrentPlayerLabel();
     }
 
-    function renderPlayers() {
-      const list = document.getElementById('playerList');
-      list.innerHTML = '';
+    function renderScoreboard() {
+      const tbody = document.querySelector("#scoreboard tbody");
+      tbody.innerHTML = "";
+
       players.forEach((p, i) => {
-        const div = document.createElement('div');
-        div.className = 'player' +
-          (p.eliminated ? ' eliminated' : '') +
-          (i === currentIndex ? ' current' : '');
-        div.textContent = `${p.name}: ${p.score} pistettä (huteja: ${p.misses})`;
-        list.appendChild(div);
+        const row = document.createElement("tr");
+
+        if (p.winner) row.classList.add("winner");
+        else if (p.eliminated) row.classList.add("eliminated");
+        else if (i === currentIndex) row.classList.add("current-turn");
+
+        row.innerHTML = `
+          <td>${p.name}</td>
+          <td>${p.score}</td>
+          <td>${p.misses}</td>
+          <td>${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
+        `;
+
+        tbody.appendChild(row);
       });
     }
 
@@ -101,7 +155,7 @@
         if (attempts > players.length) break;
       } while (players[currentIndex].eliminated);
       updateCurrentPlayerLabel();
-      renderPlayers();
+      renderScoreboard();
     }
 
     function logMessage(msg) {
@@ -151,13 +205,14 @@
 
       if (p.score === 50) {
         gameOver = true;
+        p.winner = true;
         setStatus(`${p.name} voittaa tasan 50 pisteellä.`);
-        renderPlayers();
+        renderScoreboard();
         return;
       }
 
       setStatus(`${p.name} nyt ${p.score} pistettä.`);
-      renderPlayers();
+      renderScoreboard();
       nextPlayer();
     }
 
@@ -175,16 +230,18 @@
       if (p.misses >= 3) {
         p.eliminated = true;
         setStatus(`${p.name} poistetaan (3 hutiä peräkkäin).`);
+
         const active = players.filter(pl => !pl.eliminated);
         if (active.length === 1) {
           gameOver = true;
+          active[0].winner = true;
           setStatus(`${active[0].name} voittaa viimeisenä jäljellä.`);
         }
       } else {
         setStatus(`${p.name}: ${p.misses} hutiä peräkkäin.`);
       }
 
-      renderPlayers();
+      renderScoreboard();
       if (!gameOver) nextPlayer();
     }
 
