@@ -11,7 +11,7 @@
       background:#fff; padding:15px; margin-bottom:15px; border-radius:8px;
     }
 
-    input, button { padding:6px 10px; margin:4px 0; }
+    input, button, select { padding:6px 10px; margin:4px 0; }
     button { cursor:pointer; }
 
     table {
@@ -20,61 +20,16 @@
       margin-top:10px;
     }
 
-    th {
+    th, td {
       border:1px solid #ccc;
       padding:6px;
       text-align:center;
       font-size:14px;
     }
 
-    td {
-      border:1px solid #ccc;
-      padding:6px;
-      text-align:center;
-      vertical-align:middle;
-    }
-
-    /* Heittoboksit */
-    .throw-box {
-      display:inline-block;
-      min-width:28px;
-      padding:4px 6px;
-      margin-right:10px;
-      border-right:2px solid #ccc; /* pystyviiva */
-      border-radius:4px;
-      background:#fafafa;
-      font-size:14px;
-    }
-
-    /* Poista pystyviiva viimeisestä ruudusta */
-    .throw-box:last-child {
-      border-right:none;
-    }
-
-    /* Pienemmät laatikot tilalle ja totalille */
-    .small-box {
-      padding:4px 6px;
-      font-size:13px;
-      min-width:40px;
-    }
-
-    /* Highlightit */
-    .current-turn {
-      background:#c8f7c5 !important; /* vihreä */
-      font-weight:bold;
-    }
-
-    .winner {
-      background:gold !important;
-      font-weight:bold;
-      color:#000;
-    }
-
-    .eliminated {
-      background:#ffdddd !important;
-      color:#a00;
-      text-decoration:line-through;
-    }
+    .current-turn { background:#c8f7c5 !important; font-weight:bold; }
+    .winner { background:gold !important; font-weight:bold; color:#000; }
+    .eliminated { background:#ffdddd !important; color:#a00; text-decoration:line-through; }
 
     .log-entry {
       font-size:0.9em;
@@ -91,11 +46,18 @@
     <input id="playerName" type="text" placeholder="Pelaajan nimi">
     <button onclick="addPlayer()">Lisää pelaaja</button>
 
+    <h3>3 hutin toiminto</h3>
+    <select id="missRule">
+      <option value="none">Ei mitään</option>
+      <option value="turn">Uusi vuoro</option>
+      <option value="dq">Disk. (poistaminen)</option>
+    </select>
+
     <table id="scoreboard">
-      <thead>
+      <thead id="scoreboardHead">
         <tr>
           <th>Pelaaja</th>
-          <th>Heitot</th>
+          <th class="throw-col">1</th>
           <th>Yht.</th>
           <th>Tila</th>
         </tr>
@@ -155,9 +117,24 @@
       if (players.length === 1) updateCurrentPlayerLabel();
     }
 
+    function ensureThrowColumns(count) {
+      const head = document.getElementById("scoreboardHead").querySelector("tr");
+      const existing = head.querySelectorAll(".throw-col").length;
+
+      for (let i = existing; i < count; i++) {
+        const th = document.createElement("th");
+        th.className = "throw-col";
+        th.textContent = i + 1;
+        head.insertBefore(th, head.children[head.children.length - 2]);
+      }
+    }
+
     function renderScoreboard() {
       const tbody = document.querySelector("#scoreboard tbody");
       tbody.innerHTML = "";
+
+      const maxThrows = Math.max(0, ...players.map(p => p.throws.length));
+      ensureThrowColumns(maxThrows);
 
       players.forEach((p, i) => {
         const row = document.createElement("tr");
@@ -166,17 +143,18 @@
         else if (p.eliminated) row.classList.add("eliminated");
         else if (i === currentIndex) row.classList.add("current-turn");
 
-        const throwsHTML = p.throws
-          .map(t => `<span class="throw-box">${t}</span>`)
-          .join("");
+        let html = `<td>${p.name}</td>`;
 
-        row.innerHTML = `
-          <td>${p.name}</td>
-          <td>${throwsHTML}</td>
-          <td class="small-box">${p.score}</td>
-          <td class="small-box">${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
+        for (let t = 0; t < maxThrows; t++) {
+          html += `<td>${p.throws[t] ?? ""}</td>`;
+        }
+
+        html += `
+          <td>${p.score}</td>
+          <td>${p.winner ? "Voittaja" : p.eliminated ? "Poistettu" : "Pelaa"}</td>
         `;
 
+        row.innerHTML = html;
         tbody.appendChild(row);
       });
     }
@@ -245,7 +223,7 @@
 
       if (newScore > 50) {
         newScore = 25;
-        boxValue = "\\25";
+        boxValue = "25↓";
         logMessage(`${p.name} ylitti 50 → pudotus 25.`);
       } else {
         logMessage(`${p.name} sai ${points} pistettä.`);
@@ -276,19 +254,32 @@
       }
 
       p.misses += 1;
-      p.throws.push("-");
+      p.throws.push("–");
 
       logMessage(`${p.name} huti (putki: ${p.misses}).`);
 
-      if (p.misses >= 3) {
-        p.eliminated = true;
-        setStatus(`${p.name} poistetaan (3 hutiä peräkkäin).`);
+      const rule = document.getElementById("missRule").value;
 
-        const active = players.filter(pl => !pl.eliminated);
-        if (active.length === 1) {
-          gameOver = true;
-          active[0].winner = true;
-          setStatus(`${active[0].name} voittaa viimeisenä jäljellä.`);
+      if (p.misses >= 3) {
+        if (rule === "none") {
+          p.misses = 0;
+          setStatus(`${p.name} 3 hutiä → ei vaikutusta.`);
+        } else if (rule === "turn") {
+          p.misses = 0;
+          setStatus(`${p.name} 3 hutiä → uusi vuoro.`);
+          renderScoreboard();
+          nextPlayer();
+          return;
+        } else if (rule === "dq") {
+          p.eliminated = true;
+          setStatus(`${p.name} poistetaan (3 hutiä).`);
+
+          const active = players.filter(pl => !pl.eliminated);
+          if (active.length === 1) {
+            gameOver = true;
+            active[0].winner = true;
+            setStatus(`${active[0].name} voittaa viimeisenä jäljellä.`);
+          }
         }
       } else {
         setStatus(`${p.name}: ${p.misses} hutiä peräkkäin.`);
